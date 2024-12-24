@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  userSettings        UserSettings[]
+  officialScripts     OfficialScript[]
+  dailyStats          DailyStatsAgent[]
+  calls              Call[]
+}
+
+model InterestFormSubmission {
+  id            String    @id @default(uuid())
+  name          String
+  email         String
+  company       String?
+  role          String?
+  message       String?
+  submitted_at  DateTime  @default(now()) @map("submitted_at")
+
+  @@map("interest_submissions")
+}
+
+model OfficialScript {
+  id            String    @id @default(uuid())
+  userId        String    // Foreign key to User
+  agentId       String
+  agentName     String?
+  scriptContent String    @db.Text
+  tags          String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, agentId])
+  @@map("official_scripts")
+}
+
+model UserSettings {
+  id            String    @id @default(uuid())
+  userId        String    // Foreign key to User
+  retellApiKey  String?
+  agentIds      String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@map("user_settings")
+}
+
+model DailyStatsAgent {
+  id               String    @id @default(uuid())
+  userId           String    // Foreign key to User
+  agentId          String
+  date             DateTime  @db.Date
+  totalCalls       Int
+  totalDuration    Int
+  averageDuration  Float
+  successfulCalls  Int
+  failedCalls      Int
+  averageCsatScore Float?
+  scoredCalls      Int
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@map("daily_stats_agent")
+}
+
+model Call {
+  id                              String    @id @default(uuid())
+  userId                          String
+  callId                          String    @unique
+  agentId                         String
+  callType                        String?
+  accessToken                     String?
+  fromNumber                      String?
+  toNumber                        String?
+  direction                       String?
+  callStatus                      String
+  metadata                        Json?
+  retellLlmDynamicVariables      Json?
+  optOutSensitiveDataStorage     Boolean?
+  startTimestamp                 Float?
+  endTimestamp                   Float?
+  transcript                     String?   @db.Text
+  transcriptObject               Json?
+  transcriptWithToolCalls        Json?
+  recordingUrl                   String?
+  publicLogUrl                   String?
+  disconnectionReason            String?
+  callSummary                    String?   @db.Text
+  inVoicemail                    Boolean?
+  userSentiment                  String?
+  callSuccessful                 Boolean?
+  customAnalysisData             Json?
+  transcriptWithTimestamp        Json?
+  noConversation                 Boolean?
+  loopsDetection                 Json?
+  prematureEnding                Json?
+  longPauses                     Json?
+  overlappingInterruptions       Json?
+  sentimentAnalysisRes           Json?
+  csatScore                      Float?
+  csatReasons                    Json?
+  customerName                   String?
+  timestamp                      String?
+  status                         String?
+  comments                       String?   @db.Text
+  createdAt                      DateTime  @default(now())
+  updatedAt                      DateTime  @updatedAt
+  user                           User      @relation(fields: [userId], references: [id])
+
+  @@map("calls")
+}
